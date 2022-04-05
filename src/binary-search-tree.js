@@ -18,7 +18,6 @@ class BinarySearchTree {
   add(data) {
 
     function _addLeftNode(node, newNode) {
-      console.log('addleft', node, newNode)
       if (node.left == null) {
         node.left = newNode
       } else {
@@ -27,7 +26,6 @@ class BinarySearchTree {
     }
 
     function _addRightNode(node, newNode) {
-      console.log('addright', node, newNode)
       if (node.right == null) {
         node.right = newNode
       } else {
@@ -36,7 +34,6 @@ class BinarySearchTree {
     }
 
     function _add(node, newNode) {
-      console.log('add', node, newNode)
       if (node.data > newNode.data) {
         _addLeftNode(node, newNode)
       } else if (node.data < newNode.data) {
@@ -77,27 +74,51 @@ class BinarySearchTree {
 
   remove(data) {
 
-    function _findTarget(parent, node) {
-      if (node == null) return null
-      if (node.data == data) return { parent, node }
-      if (node.data > data) return _findTarget(node, node.left)
-      else return _findTarget(node, node.right)
+    function _findTarget(node, data, parent) {
+      if (node == null) {
+        return null
+      }
+      if (node.data == data) {
+        return { parent, node }
+      }
+      if (node.data > data) {
+        return _findTarget(node.left, data, node)
+      } else {
+        return _findTarget(node.right, data, node)
+      }
+    }
+
+    function _detachBetterRLNode(node) {
+      if (node.left == null) {
+        return { betterNode: node, newChild: node.right }
+      }
+
+      const {betterNode, newChild} = _detachBetterRLNode(node.left)
+
+      node.left = newChild
+
+      return { betterNode, newChild: node }
     }
 
     if (this.has(data) == null) {
       return
     }
 
-    const { parent, node } = _findTarget(this.treeRoot, data)
+    const { parent, node } = _findTarget(this.treeRoot, data, null)
+
     let hoistedNode
 
-    if (node.left == null) { hoistedNode = node.right }
-    else if (node.right == null) { hoistedNode = node.left }
+    if (node.left == null) {
+      hoistedNode = node.right
+    }
+    else if (node.right == null) {
+      hoistedNode = node.left
+    }
     else {
-      const betterRLNode = _detachBetterRLNode(node.right)
-      if (betterRLNode === node.right) { betterRLNode.right = null }
-      else { betterRLNode.right = node.right }
-      hoistedNode = betterRLNode
+      const { betterNode, newChild } = _detachBetterRLNode(node.right)
+      hoistedNode = betterNode
+      betterNode.right = newChild
+      betterNode.left = node.left
     }
 
     if (parent == null) {
@@ -128,11 +149,13 @@ class BinarySearchTree {
     return cursor.data
   }
 }
+
 const { inspect } = require('util')
-const tree = new BinarySearchTree()
+const tree = new BinarySearchTree();
 tree.add(2)
+tree.add(1)
 tree.add(3)
-tree.add(4)
+tree.remove(2)
 console.log(inspect(tree))
 
 module.exports = {
